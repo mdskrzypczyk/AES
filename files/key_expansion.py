@@ -49,5 +49,5 @@ class KeyExpansion:
                 second_ek = ek(self.expanded_key, (expansion_round-sig_round)*4)
                 arg = [int(a,16) ^ int(b,16) for a,b in zip(first_ek,second_ek)]
 
-            arg = ''.join([hex(a).replace('0x','') for a in arg1]]).upper()
+            arg = ''.join([hex(a).replace('0x','') for a in arg]).upper()
             self.expanded_key += arg
