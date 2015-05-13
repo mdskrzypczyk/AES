@@ -1,4 +1,7 @@
 sbox = open('aes/sbox').read().replace('\n',' ' ).split(' ')
+isbox = open('aes/isbox').read().replace('\n',' ').split(' ')
+etable = open('aes/etable').read().replace('\n',' ').split(' ')
+ltable = open('aes/ltable').read().replace('\n',' ').split(' ')
 rcon_box = open('aes/rcon').read().split('\n')
 
 def rot_word(word):
@@ -108,54 +111,60 @@ def hex_mult(hex1, hex2):
 
     return hex1
 
+def el(num):
+    while num > 255:
+        num -= 255
+    return int(etable[num],16)
+
+def ll(num):
+    return int(ltable[num],16)
+
 def mix_column(state):
-    #Basic multiplication matrix row, can reuse and shift
-    mult_row = [2,3,1,1]
+    #Basic multiplication row, can shift and reuse
+    mult = [2,3,1,1]
 
-    #Separate state into individual 'byte' representation
-    int_state = [state[_:_+2] for _ in range(0,len(state),2)]
-
-    #Convert to integers to perform XOR
-    int_state = [int(a,16) for a in int_state]
-
+    #Separate state into individual 'byte' representations and convert to integers
+    int_state = [int(state[_:_+2],16) for _ in range(0,len(state),2)]
+    
     new_state = []
+
+    #Calculate each row byte using Galois Field
     for _ in range(4):
-        #Calculate each row byte
-        bfirst = hex_mult(int_state[0], mult_row[0]) ^ hex_mult(int_state[1], mult_row[1]) ^ hex_mult(int_state[2], mult_row[2]) ^ hex_mult(int_state[3], mult_row[3])
-        bsecond = hex_mult(int_state[4], mult_row[0]) ^ hex_mult(int_state[5], mult_row[1]) ^ hex_mult(int_state[6], mult_row[2]) ^ hex_mult(int_state[7], mult_row[3])
-        bthird = hex_mult(int_state[8], mult_row[0]) ^ hex_mult(int_state[9], mult_row[1]) ^ hex_mult(int_state[10], mult_row[2]) ^ hex_mult(int_state[11], mult_row[3])
-        bfourth = hex_mult(int_state[12], mult_row[0]) ^ hex_mult(int_state[13], mult_row[1]) ^ hex_mult(int_state[14], mult_row[2]) ^ hex_mult(int_state[15], mult_row[3])
+        bfirst = el(ll(int_state[0])+ll(mult[0]))^el(ll(int_state[1])+ll(mult[1]))^el(ll(int_state[2])+ll(mult[2]))^el(ll(int_state[3])+ll(mult[3]))
+        bsecond = el(ll(int_state[4])+ll(mult[0]))^el(ll(int_state[5])+ll(mult[1]))^el(ll(int_state[6])+ll(mult[2]))^el(ll(int_state[7])+ll(mult[3]))
+        bthird = el(ll(int_state[8])+ll(mult[0]))^el(ll(int_state[9])+ll(mult[1]))^el(ll(int_state[10])+ll(mult[2]))^el(ll(int_state[11])+ll(mult[3]))
+        bfourth = el(ll(int_state[12])+ll(mult[0]))^el(ll(int_state[13])+ll(mult[1]))^el(ll(int_state[14])+ll(mult[2]))^el(ll(int_state[15])+ll(mult[3]))
         
-        #If number is greater than 'FF' we need to remove the leading bit
-        if bfirst > 255:
+        #Make sure to remove any leading hex digits
+        while bfirst > 255:
             bfirst -= 256
-        if bsecond > 255:
+        while bsecond > 255:
             bsecond -= 256
-        if bthird > 255:
+        while bthird > 255:
             bthird -= 256
-        if bfourth > 255:
+        while bfourth > 255:
             bfourth -= 256
 
-        #Add these bytes to a list
-        new_state.extend([bfirst, bsecond, bthird, bfourth])
+        #Add onto running list of calculated bytes
+        new_state.extend([bfirst,bsecond,bthird,bfourth])
 
-        #Shift the multiplication row over for the next row of bytes
-        mult_row = mult_row[3:] + mult_row[0:3]
+        #Shift multiplication matrix row
+        mult = mult[3:] + mult[0:3]
 
-
-    #Put the values back in correct order
+    #Reconstruct in proper order
     new_state = [new_state[_::4] for _ in range(4)]
     new_state = [num for _ in new_state for num in _]
 
     converted = []
 
-    #When converting back to an ASCII representation, need to make sure digits less than 10 have a leading 0
+    #Recreate hex representation of each number
     for item in new_state:
         if item < 10:
             converted.append('0'+hex(item).replace('0x',''))
         else:
             converted.append(hex(item).replace('0x',''))
 
-    #Reconstruct the string
+    #Reconstruct hex string
     new_state = ''.join(converted).upper()
     return new_state
+    

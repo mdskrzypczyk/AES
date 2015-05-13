@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from sys import argv
-from files import encryption, key_expansion
-import random
+from aes import key_expansion, encryption
 
 script, block, key_size = argv
 
