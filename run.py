@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from sys import argv
-from aes import key_expansion, encryption
+from aes import key_expansion, decryption, encryption
 
 script, block, key_size = argv
 
@@ -14,3 +14,5 @@ generated_key = key_expansion.KeyExpansion(key,key_size).expanded_key
 #Encrypt the message
 encrypted_message = encryption.Encryption(block, generated_key, key_size).message
 print encrypted_message
+decrypted_message = decryption.Decryption(encrypted_message, generated_key, key_size).message
+print decrypted_message
