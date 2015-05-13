@@ -24,20 +24,18 @@ class Decryption:
 
         #Perform encryption
         for decryptions in range(len(block)/32):
-
             #First Add Round Key
+            current_key = key_start
             current_message_section = add_round_key(key[key_start:], block[block_start:block_start+32])
-            key_start -= 32
-            
+            current_key -= 32
+
             #Iterate for the rounds that do the same thing
             for encryption_round in range(1, num_rounds):
-                current_message_section = imix_column(add_round_key(key[key_start:key_start+32], ibyte_sub(ishift_row(current_message_section))))
-                # current_message_section = imix_column(current_message_section)
-                key_start -= 32
+                current_message_section = imix_column(add_round_key(key[current_key:current_key+32], ibyte_sub(ishift_row(current_message_section))))
+                current_key-= 32
 
             #Final round of add round key, shift row, and byte substitution
             current_message_section = add_round_key(key[0:32], ibyte_sub(ishift_row(current_message_section)))
-            
             #Append the encrypted block onto the message
             self.message += current_message_section
 
