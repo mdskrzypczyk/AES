@@ -1,27 +1,4 @@
-sbox = open('files/sbox').read().replace('\n',' ').split(' ')
-rcon_box = open('files/rcon').read().split('\n')
-
-def rot_word(word):
-    #Circular shift 1 byte
-    return (word[2:]+word[0:2])
-
-def sub_word(word):
-    new_word = ''
-
-    #New string contains substituted bytes
-    for _ in range(0,len(word),2):
-        new_word += sbox[int(word[_],16)*16 + int(word[_+1],16)]
-
-    return new_word
-
-def rcon(val):
-    #Return a lookup
-    return rcon_box[val]
-
-def ek(expanded_key, offset):
-    byte_offset = offset*2
-    #Return segment of key
-    return expanded_key[byte_offset:byte_offset+8]
+from aes_operations import *
 
 class KeyExpansion:
     def __init__(self, key, key_size):

@@ -1,4 +1,27 @@
-sbox = open('files/sbox').read().replace('\n',' ' ).split(' ')
+sbox = open('aes/sbox').read().replace('\n',' ' ).split(' ')
+rcon_box = open('aes/rcon').read().split('\n')
+
+def rot_word(word):
+    #Circular shift 1 byte
+    return (word[2:]+word[0:2])
+
+def sub_word(word):
+    new_word = ''
+
+    #New string contains substituted bytes
+    for _ in range(0,len(word),2):
+        new_word += sbox[int(word[_],16)*16 + int(word[_+1],16)]
+
+    return new_word
+
+def rcon(val):
+    #Return a lookup
+    return rcon_box[val]
+
+def ek(expanded_key, offset):
+    byte_offset = offset*2
+    #Return segment of key
+    return expanded_key[byte_offset:byte_offset+8]
 
 def add_round_key(current_key, state):
     #Perform XOR on invididual key and state bytes
@@ -41,6 +64,34 @@ def shift_row(state):
         ret_state += fourth_row[_:_+2]
 
     return ret_state
+
+def ishift_row(state):
+    #Separate state into individual "byte" ascii characters
+    new_state = [state[_:_+2] for _ in range(0,len(state),2)]
+
+    #Join every fourth character into it's own 'row' of the state
+    first_row = ''.join(new_state[::4])
+    second_row = ''.join(new_state[1::4])
+    third_row = ''.join(new_state[2::4])
+    fourth_row = ''.join(new_state[3::4])
+
+    #Perform the byte shifts on each row
+    second_row = second_row[6:] + second_row[2:6]
+    third_row = third_row[4:] + third_row[0:4]
+    fourth_row = fourth_row[2:] + fourth_row[0:2]
+
+    #Reconstruct a state with the shifted rows
+    ret_state = ''
+    for _ in range(0,len(state)/2,2):
+        ret_state += first_row[_:_+2]
+        ret_state += second_row[_:_+2]
+        ret_state += third_row[_:_+2]
+        ret_state += fourth_row[_:_+2]
+
+    return ret_state
+
+def imix_column(state):
+    pass
 
 def hex_mult(hex1, hex2):
     if hex2 == 2:
@@ -108,43 +159,3 @@ def mix_column(state):
     #Reconstruct the string
     new_state = ''.join(converted).upper()
     return new_state
-
-class Encryption:
-    def __init__(self, block, key, key_size):
-        #Want to save message length in case we need to pad with 0's
-        self.message_length = len(block)
-        self.message = ''
-
-        #Pad message with 0's until a proper multiple of 32 reached
-        while len(block) % 32 != 0:
-            block += '0'
-
-        #Change number of rounds based on size of key
-        if key_size == '16':
-            num_rounds = 10
-        elif key_size == '24':
-            num_rounds = 12
-        elif key_size == '32':
-            num_rounds = 14
-
-        #Variable to keep track of where we are in the message
-        block_start = 0
-
-        #Perform encryption
-        for encryptions in range(len(block)/32):
-
-            #First Add Round Key
-            current_message_section = add_round_key(key[0:32], block[block_start:block_start+32])
-            
-            #Iterate for the rounds that do the same thing
-            for encryption_round in range(1, num_rounds):
-                current_message_section = add_round_key(key[encryption_round*32:(encryption_round+1)*32], mix_column(shift_row(byte_sub(current_message_section))))
-
-            #Final round of add round key, shift row, and byte substitution
-            current_message_section = add_round_key(key[num_rounds*32:(num_rounds+1)*32], shift_row(byte_sub(current_message_section)))
-            
-            #Append the encrypted block onto the message
-            self.message += current_message_section
-
-            #Increment section of message we are encrypting
-            block_start += 32
