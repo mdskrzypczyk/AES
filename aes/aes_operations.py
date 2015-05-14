@@ -32,7 +32,15 @@ def add_round_key(current_key, state):
 
     #Turn it back into an ASCII representation
     new_state = ''.join([hex(a).replace('0x','') for a in new_state]).upper()
-    return new_state
+
+    # ret_state = ''
+    # for item in new_state:
+    #     if item < 16:
+    #         ret_state += ('0' + hex(item).replace('0x',''))
+    #     else:
+    #         ret_state += hex(item).replace('0x','')
+
+    return new_state.upper()
 
 def byte_sub(state):
     new_state = ''
@@ -154,7 +162,7 @@ def mix_column(state):
 
     #Recreate hex representation of each number
     for item in new_state:
-        if item < 10:
+        if item < 16:
             converted.append('0'+hex(item).replace('0x',''))
         else:
             converted.append(hex(item).replace('0x',''))

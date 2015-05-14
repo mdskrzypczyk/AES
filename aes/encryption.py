@@ -20,13 +20,11 @@ class Encryption:
 
         #Variable to keep track of where we are in the message
         block_start = 0
-
         #Perform encryption
         for encryptions in range(len(block)/32):
 
             #First Add Round Key
             current_message_section = add_round_key(key[0:32], block[block_start:block_start+32])
-            
             #Iterate for the rounds that do the same thing
             for encryption_round in range(1, num_rounds):
                 current_message_section = add_round_key(key[encryption_round*32:(encryption_round+1)*32], mix_column(shift_row(byte_sub(current_message_section))))
