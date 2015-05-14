@@ -11,7 +11,6 @@ class Encryption:
         while len(block) % 32 != 0:
             block += '0'
 
-        print block
         #Change number of rounds based on size of key
         if key_size == 16:
             num_rounds = 10

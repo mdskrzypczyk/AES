@@ -38,5 +38,6 @@ class Decryption:
             #Increment section of message we are encrypting
             block_start += 32
 
+        #Remove length padding on message
         message_length = int(self.message[0:32],16)
         self.message = self.message[32:32+message_length]

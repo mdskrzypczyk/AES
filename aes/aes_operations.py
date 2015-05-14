@@ -42,6 +42,8 @@ def append_length(message):
 
     return (hex_length + message)
 
+
+
 #=============================Key Expansion Functions===========================#
 def rot_word(word):
     #Circular shift 1 byte

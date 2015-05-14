@@ -11,7 +11,6 @@ if len(argv) == 0:
 
 #Check options
 options = argv[1]
-
 if '-' not in options:
 	print 'Invalid options'
 	print 'Script use: ./run.py -[options] [block]'
