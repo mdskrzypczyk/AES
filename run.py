@@ -8,6 +8,8 @@ print
 #Check if arguments supplied
 if len(argv) == 0:
 	print 'Script use: ./run.py -[options] [block]'
+	print 'If message contains spaces, provide the message in double quotes'
+	print 'If quotations made within message place them between single quotes'
 	exit()
 
 #Check options
@@ -59,7 +61,7 @@ else:
 	if key_size not in key_sizes:
 		print 'Invalid key size, must be 16, 24, or 32'
 		exit()
-		
+
 	key = ''.join(random.choice('0123456789ABCDEF') for x in range(key_size*2))
 
 #Expand the key
