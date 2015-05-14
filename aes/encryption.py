@@ -6,10 +6,12 @@ class Encryption:
         self.message_length = len(block)
         self.message = ''
 
+        block = append_length(block)
         #Pad message with 0's until a proper multiple of 32 reached
         while len(block) % 32 != 0:
             block += '0'
 
+        print block
         #Change number of rounds based on size of key
         if key_size == 16:
             num_rounds = 10

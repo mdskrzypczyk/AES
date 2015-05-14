@@ -6,10 +6,6 @@ class Decryption:
         self.message_length = len(block)
         self.message = ''
 
-        #Pad message with 0's until a proper multiple of 32 reached
-        while len(block) % 32 != 0:
-            block += '0'
-
         #Change number of rounds based on size of key
         if key_size == 16:
             num_rounds = 10
@@ -41,3 +37,6 @@ class Decryption:
 
             #Increment section of message we are encrypting
             block_start += 32
+
+        message_length = int(self.message[0:32],16)
+        self.message = self.message[32:32+message_length]

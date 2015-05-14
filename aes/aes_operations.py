@@ -4,17 +4,45 @@ etable = open('aes/etable').read().replace('\n',' ').split(' ')
 ltable = open('aes/ltable').read().replace('\n',' ').split(' ')
 rcon_box = open('aes/rcon').read().split('\n')
 
-def string_to_hex(in_hex):
-    in_hex = [ord(_) for _ in in_hex]
-    hex_block = ''
-    for num in in_hex:
+
+#====================Ascii/Hex string manipulation=====================#
+def string_to_hex(in_string):
+    #Convert string to list of ascii values
+    in_string = [ord(_) for _ in in_string]
+    out_hex = ''
+
+    #Convert into a string of hex characters
+    for num in in_string:
         if num < 16:
-            hex_block += ('0' + hex(num).replace('0x',''))
+            out_hex += ('0' + hex(num).replace('0x',''))
         else:
-            hex_block += hex(num).replace('0x','')
+            out_hex += hex(num).replace('0x','')
 
-    return hex_block
+    return out_hex
 
+def hex_to_string(in_hex):
+    #Convert hex into a list of ascii values
+    in_hex = [int(in_hex[_:_+2],16) for _ in range(0,len(in_hex),2)]
+
+    #Convert into a string of ascii characters
+    out_string = ''
+    for num in in_hex:
+        out_string += chr(num)
+
+    return out_string
+
+def append_length(message):
+    #Obtain original length of message
+    message_length = len(message)
+
+    #Create a hex representation of it
+    hex_length = hex(message_length).replace('0x','')
+    while len(hex_length) % 32 != 0:
+        hex_length = '0' + hex_length
+
+    return (hex_length + message)
+
+#=============================Key Expansion Functions===========================#
 def rot_word(word):
     #Circular shift 1 byte
     return (word[2:]+word[0:2])
@@ -37,19 +65,15 @@ def ek(expanded_key, offset):
     #Return segment of key
     return expanded_key[byte_offset:byte_offset+8]
 
+
+
+#============================Encryption and Decryption Functions=============================#
 def add_round_key(current_key, state):
     #Perform XOR on invididual key and state bytes
     new_state = [int(a,16) ^ int(b,16) for a,b in zip(current_key,state)]
 
     #Turn it back into an ASCII representation
     new_state = ''.join([hex(a).replace('0x','') for a in new_state]).upper()
-
-    # ret_state = ''
-    # for item in new_state:
-    #     if item < 16:
-    #         ret_state += ('0' + hex(item).replace('0x',''))
-    #     else:
-    #         ret_state += hex(item).replace('0x','')
 
     return new_state.upper()
 
