@@ -4,6 +4,17 @@ etable = open('aes/etable').read().replace('\n',' ').split(' ')
 ltable = open('aes/ltable').read().replace('\n',' ').split(' ')
 rcon_box = open('aes/rcon').read().split('\n')
 
+def string_to_hex(in_hex):
+    in_hex = [ord(_) for _ in in_hex]
+    hex_block = ''
+    for num in in_hex:
+        if num < 16:
+            hex_block += ('0' + hex(num).replace('0x',''))
+        else:
+            hex_block += hex(num).replace('0x','')
+
+    return hex_block
+
 def rot_word(word):
     #Circular shift 1 byte
     return (word[2:]+word[0:2])
