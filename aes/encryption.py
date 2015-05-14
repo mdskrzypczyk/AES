@@ -11,11 +11,11 @@ class Encryption:
             block += '0'
 
         #Change number of rounds based on size of key
-        if key_size == '16':
+        if key_size == 16:
             num_rounds = 10
-        elif key_size == '24':
+        elif key_size == 24:
             num_rounds = 12
-        elif key_size == '32':
+        elif key_size == 32:
             num_rounds = 14
 
         #Variable to keep track of where we are in the message

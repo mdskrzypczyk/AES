@@ -6,15 +6,15 @@ class KeyExpansion:
         self.expanded_key += key
 
         #Expand key differently based on request
-        if key_size == '16':
+        if key_size == 16:
             start_round = 4
             rounds = 44
             sig_round = 4
-        elif key_size == '24':
+        elif key_size == 24:
             start_round = 6
             rounds = 52
             sig_round = 6
-        elif key_size == '32':
+        elif key_size == 32:
             start_round = 8
             rounds = 60
             sig_round = 8

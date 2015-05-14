@@ -2,30 +2,31 @@
 from sys import argv
 from aes import key_expansion, decryption, encryption
 
-script, block, key_size = argv
+options, block = argv[1:3]
 
-#This is for generating a random key
-#key = ''.join(random.choice('0123456789ABCDEF') for x in range(key_size))
+#If user wants string encrypted
+if 's' in options:
+	hex_block = string_to_hex(block)
+else:
+	hex_block = block
 
-block = [ord(_) for _ in block]
-print block
-hex_block = ''
-for num in block:
-	if num < 16:
-		hex_block += ('0' + hex(num).replace('0x',''))
-	else:
-		hex_block += hex(num).replace('0x','')
-
-key = '000102030405060708090A0B0C0D0E0F'
-
-#hex_block = block
+#If user wants to provide a key for encryption/decryption
+if 'k' in options:
+	key = argv[3]
+	key_size = len(key)/2
+else:
+	key_size = int(argv[3])
+	key = ''.join(random.choice('0123456789ABCDEF') for x in range(key_size))
 
 #Expand the key
 generated_key = key_expansion.KeyExpansion(key,key_size).expanded_key
 
-#Encrypt the message
-encrypted_message = encryption.Encryption(hex_block, generated_key, key_size).message
-print encrypted_message
+#If user wants to encrypt
+if 'e' in options:
+	encrypted_message = encryption.Encryption(hex_block, generated_key, key_size).message
+	print encrypted_message
 
-decrypted_message = decryption.Decryption(encrypted_message, generated_key, key_size).message
-print decrypted_message
+#If user wants to decrypt
+if 'd' in options:
+	decrypted_message = decryption.Decryption(hex_block, generated_key, key_size).message
+	print decrypted_message
