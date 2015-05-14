@@ -13,11 +13,14 @@ This package requires Python 2.7
 example:  ./run.py -ke 00112233445566778899AABBCCDDEEFF 000102030405060708090A0B0C0D0E0F
 ## Inputs
 options: The following options are provided in this distribution.
+
 -e      Encrypt - This signals the script to encrypt the provided message
+
 -d      Decrypt - This signals the script to decrypt the provided message
+
 -k      Use Key - This signals the script to use the user provided key
--s      String - The encryption input is a string or the decryption output will
-                 be a string
+
+-s      String - The encryption input is a string or the decryption output will be a string
 
 message: This is the message that the script is to encrypt or decrypt.
 
