@@ -10,6 +10,7 @@ This package requires Python 2.7
 
 ./run.py -[options] [message]...(key) (key size)
 
+example:  ./run.py -ke 00112233445566778899AABBCCDDEEFF 000102030405060708090A0B0C0D0E0F
 ## Inputs
 options: The following options are provided in this distribution.
 -e      Encrypt - This signals the script to encrypt the provided message
