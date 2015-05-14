@@ -2,6 +2,7 @@
 from sys import argv, exit
 from aes import key_expansion, decryption, encryption, aes_operations
 import random
+import string
 
 print
 #Check if arguments supplied
@@ -16,6 +17,7 @@ if '-' not in options:
 	print 'Script use: ./run.py -[options] [block]'
 	print '=========Options========='
 	print '-k       Use user provided key'
+	print '         Note: if providing key, add onto end of argument list'
 	print '-s       Input block is string'
 	print '-e       Encrypt message'
 	print '-d       Decrypt message'
@@ -32,6 +34,10 @@ block = argv[2]
 if 's' in options:
 	hex_block = aes_operations.string_to_hex(block)
 else:
+	#If user chooses to encrypt hex must check if characters are hex
+	if all(chars in string.hexdigits for chars in block) is not True:
+		print 'Provided hex-string is not all hex'
+		exit()
 	hex_block = block
 
 #If user wants to provide a key for encryption/decryption
@@ -45,11 +51,15 @@ else:
 	if len(argv) < 4:
 		print 'No key size provided'
 		exit()
+
 	key_sizes = [16,24,32]
 	key_size = int(argv[3])
+
+	#Check if key size requested is valid
 	if key_size not in key_sizes:
 		print 'Invalid key size, must be 16, 24, or 32'
 		exit()
+		
 	key = ''.join(random.choice('0123456789ABCDEF') for x in range(key_size*2))
 
 #Expand the key
