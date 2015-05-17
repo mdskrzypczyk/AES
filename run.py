@@ -6,7 +6,7 @@ import string
 
 print
 #Check if arguments supplied
-if len(argv) == 0:
+if len(argv) == 1:
 	print 'Script use: ./run.py -[options] [block]'
 	print 'If message contains spaces, provide the message in double quotes'
 	print 'If quotations made within message place them between single quotes'
@@ -43,23 +43,31 @@ else:
 	hex_block = block
 
 #If user wants to provide a key for encryption/decryption
+key_sizes = [16,24,32]
 if 'k' in options:
 	if len(argv) < 4:
 		print 'No key provided'
 		exit()
+
 	key = argv[3]
 	key_size = len(key)/2
+	if key_size not in key_sizes:
+		print 'Invalid key size, key must be 16, 24, or 32 bytes'
+		exit()
 else:
 	if len(argv) < 4:
 		print 'No key size provided'
 		exit()
 
-	key_sizes = [16,24,32]
+	if all(chars in string.digits for chars in argv[3]) is not True:
+		print 'Invalid key size, must be 16, 24, or 32 bytes'
+		exit()
+
 	key_size = int(argv[3])
 
 	#Check if key size requested is valid
 	if key_size not in key_sizes:
-		print 'Invalid key size, must be 16, 24, or 32'
+		print 'Invalid key size, must be 16, 24, or 32 bytes'
 		exit()
 
 	key = ''.join(random.choice('0123456789ABCDEF') for x in range(key_size*2))
@@ -76,11 +84,19 @@ if 'e' in options:
 	exit()
 
 #If user wants to decrypt
-if 'd' in options:
+elif 'd' in options:
+	if all(chars in string.hexdigits for chars in block) is not True or (len(block) % 32 != 0):
+		print 'Decryption must take hex string as input, string data must be multiple of 16 bytes'
+		exit()
+
 	decrypted_message = decryption.Decryption(block, generated_key, key_size).message
 	if 's' in options:
 		decrypted_message = aes_operations.hex_to_string(decrypted_message)
 	print 'Decrypted message: ' + decrypted_message
 	if 'k' not in options:
 		print 'Key used: ' + key
+	exit()
+
+else:
+	print 'Encryption/decryption not specfied'
 	exit()
