@@ -23,6 +23,7 @@ if '-' not in options:
 	print '-s       Input block is string'
 	print '-e       Encrypt message'
 	print '-d       Decrypt message'
+	print '-f       Use file'
 	print 'Please include all options together (i.e. -ske)'
 	exit()
 
@@ -32,6 +33,11 @@ if len(argv) < 3:
 	exit()
 
 block = argv[2]
+
+if 'f' in options:
+	block = open(block).read()
+	
+
 #If user wants string encrypted
 if 's' in options:
 	hex_block = aes_operations.string_to_hex(block)
