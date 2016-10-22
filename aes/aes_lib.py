@@ -73,21 +73,21 @@ ltable = [
     0x3b, 0x52, 0x6f, 0xf6, 0x2e, 0x89, 0xf7, 0xc0, 0x68, 0x1b, 0x64, 0x04, 0x06, 0xbf, 0x83, 0x38
 ]
 
-rcon_table = [0x01000000,
-              0x02000000,
-              0x04000000,
-              0x08000000,
-              0x10000000,
-              0x20000000,
-              0x40000000,
-              0x80000000,
-              0x1B000000,
-              0x36000000,
-              0x6C000000,
-              0xD8000000,
-              0xAB000000,
-              0x4D000000,
-              0x9A000000
+rcon_table = [[0x01, 0x00, 0x00, 0x00],
+              [0x02, 0x00, 0x00, 0x00],
+              [0x04, 0x00, 0x00, 0x00],
+              [0x08, 0x00, 0x00, 0x00],
+              [0x10, 0x00, 0x00, 0x00],
+              [0x20, 0x00, 0x00, 0x00],
+              [0x40, 0x00, 0x00, 0x00],
+              [0x80, 0x00, 0x00, 0x00],
+              [0x1B, 0x00, 0x00, 0x00],
+              [0x36, 0x00, 0x00, 0x00],
+              [0x6C, 0x00, 0x00, 0x00],
+              [0xD8, 0x00, 0x00, 0x00],
+              [0xAB, 0x00, 0x00, 0x00],
+              [0x4D, 0x00, 0x00, 0x00],
+              [0x9A, 0x00, 0x00, 0x00]
 ]
 
 #===============Encryption Functions=====================#
@@ -121,6 +121,9 @@ def imix_column(state):
 
 #===============Key Expansion Functions==================#
 
+VALID_KEY_LENGTHS = [16, 24, 32]
+KEY_LENGTHS_TO_ROUNDS = {16: 42, 24: 50, 32: 58}
+
 def ek(expanded_key, n):
     return expanded_key[n:n+4]
 
@@ -128,7 +131,39 @@ def rcon(n):
     return rcon_table[n]
 
 def rot_word(b_word):
-    return b_word[1:] + b_word[0]
+    return b_word[1:] + [b_word[0]]
 
 def sub_word(b_word):
     return [sbox[b] for b in b_word]
+
+def generate_round_bytes(expanded_key, current_round, num_bytes):
+    print("Current round: {}".format(current_round))
+    sre = sub_word(rot_word(ek(expanded_key, (current_round-1)*4)))
+    ek2 = ek(expanded_key, (current_round-num_bytes)*4)
+    rc = rcon((current_round/num_bytes)-1)
+    new_bytes = [a^b^c for a,b,c in zip(sre, rc, ek2)]
+    return new_bytes
+
+def expand_round_bytes(expanded_key, current_round, num_bytes):
+    expanded_round_bytes = []
+    for i in range(1, num_bytes):
+        ek1 = ek(expanded_key, (current_round+i-1)*4)
+        ek2 = ek(expanded_key, (current_round+i-num_bytes)*4)
+        expanded_key += [a^b for a,b in zip(ek1, ek2)]
+
+    return expanded_key
+
+def expand_key(key):
+    # Key expansion parameters
+    num_bytes = len(key) / 4
+    num_rounds = KEY_LENGTHS_TO_ROUNDS[len(key)]
+
+    # First bytes are the original key
+    expanded_key = key
+
+    for expansion_round in range(num_bytes, num_rounds, num_bytes):
+        round_bytes = generate_round_bytes(expanded_key, expansion_round, num_bytes)
+        expanded_key += round_bytes
+        expanded_key = expand_round_bytes(expanded_key, expansion_round, num_bytes)
+
+    return expanded_key 
