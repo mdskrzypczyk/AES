@@ -57,7 +57,7 @@ etable = [
 
 
 ltable = [
-    0x00, 0x00, 0x19, 0x01, 0x32, 0x02, 0x1A, 0xC6, 0x4B, 0xC7, 0x1B, 0x68, 0x33, 0xEE, 0xDF, 0x03,
+    ' ', 0x00, 0x19, 0x01, 0x32, 0x02, 0x1A, 0xC6, 0x4B, 0xC7, 0x1B, 0x68, 0x33, 0xEE, 0xDF, 0x03,
     0x64, 0x04, 0xE0, 0x0E, 0x34, 0x8D, 0x81, 0xEF, 0x4C, 0x71, 0x08, 0xC8, 0xF8, 0x69, 0x1C, 0xC1,
     0x7D, 0xC2, 0x1D, 0xB5, 0xF9, 0xB9, 0x27, 0x6A, 0x4D, 0xE4, 0xA6, 0x72, 0x9A, 0xC9, 0x09, 0x78,
     0x65, 0x2F, 0x8A, 0x05, 0x21, 0x0F, 0xE1, 0x24, 0x12, 0xF0, 0x82, 0x45, 0x35, 0x93, 0xDA, 0x8E,
@@ -97,7 +97,7 @@ rcon_table = [[0x01, 0x00, 0x00, 0x00],
 AES_BLOCK_SIZE = 16
 
 def add_round_key(state, key):
-    new_state = [p ^ k for p,k in zip(state, key)]
+    new_state = [s ^ k for s,k in zip(state, key)]
     return new_state
 
 def e(b):
@@ -110,15 +110,41 @@ def l(b):
 
 def galois_multiply(b_word, matrix_row):
     b1, b2, b3, b4 = b_word
-    m1, m2, m3, m4 = matrix_row
     new_b_word = []
-    new_b_word.append(e(l(b1) + l(m1)) ^ e(l(b2) + l(m2)) ^ e(l(b3) + l(m3)) ^ e(l(b4) + l(m4)))
-    new_b_word.append(e(l(b1) + l(m4)) ^ e(l(b2) + l(m1)) ^ e(l(b3) + l(m2)) ^ e(l(b4) + l(m3)))
-    new_b_word.append(e(l(b1) + l(m3)) ^ e(l(b2) + l(m4)) ^ e(l(b3) + l(m1)) ^ e(l(b4) + l(m2)))
-    new_b_word.append(e(l(b1) + l(m2)) ^ e(l(b2) + l(m3)) ^ e(l(b3) + l(m4)) ^ e(l(b4) + l(m1)))
+    for i in range(4):
+        m1, m2, m3, m4 = matrix_row
+        if b1 == 0:
+            s1 = 0
+        else:
+            s1 = e(l(b1) + l(m1))
+        if b2 == 0:
+            s2 = 0
+        else:
+            s2 = e(l(b2) + l(m2))
+        if b3 == 0:
+            s3 = 0
+        else:
+            s3 = e(l(b3) + l(m3))
+        if b4 == 0:
+            s4 = 0
+        else:
+            s4 = e(l(b4) + l(m4))
+
+        new_b_word.append(s1 ^ s2 ^ s3 ^ s4)
+        matrix_row = [matrix_row[3]] + matrix_row[0:3]
+
     return new_b_word
 
 #===============Encryption Functions=====================#
+
+def pad_plaintext(plaintext):
+    plaintext = [ord(c) for c in plaintext]
+    padding_num = 16 - (len(plaintext) % 16)
+    plaintext += [padding_num] * padding_num
+    return plaintext
+
+def plaintext_to_blocks(plaintext):
+    return [plaintext[i:i+AES_BLOCK_SIZE] for i in range(0, len(plaintext), AES_BLOCK_SIZE)]
 
 def byte_sub(state):
     new_state = [sbox[b] for b in state]
@@ -147,29 +173,19 @@ def encrypt_block(iv, block, key):
 
     full_round_keys = [full_round_keys[i:i+16] for i in range(0, len(full_round_keys), 16)]
 
-    print("INITIAL: {}".format([hex(c) for c in curr_state]))
     curr_state = add_round_key(curr_state, initial_key_segment)
-    print("[ROUND 0] ROUND_KEY: {}".format([hex(c) for c in initial_key_segment]))
-    print("[ROUND 0] ADD_ROUND_KEY: {}".format([hex(c) for c in curr_state]))
     
-    round_counter = 1
     for key_segment in full_round_keys:
         curr_state = byte_sub(curr_state)
-        print("[ROUND {}] BYTE_SUB: {}".format(round_counter, [hex(c) for c in curr_state]))
-    
         curr_state = shift_row(curr_state)
-        print("[ROUND {}] SHIFT_ROW: {}".format(round_counter, [hex(c) for c in curr_state]))
-    
         curr_state = mix_column(curr_state)
-        print("[ROUND {}] MIX_COLUMN: {}".format(round_counter, [hex(c) for c in curr_state]))
-    
         curr_state = add_round_key(curr_state, key_segment)
-        print("[ROUND {}] ROUND_KEY: {}".format(round_counter, [hex(c) for c in key_segment]))
-        print("[ROUND {}] ADD_ROUND_KEY: {}".format(round_counter, [hex(c) for c in curr_state]))
-    
-        round_counter += 1
 
-    return add_round_key(shift_row(byte_sub(curr_state)), final_key_segment)
+    curr_state = byte_sub(curr_state)
+    curr_state = shift_row(curr_state)
+    final_state = add_round_key(curr_state, final_key_segment)
+    
+    return final_state
 
 #===============Decryption Functions=====================#
 
@@ -193,16 +209,24 @@ def imix_column(state):
     return new_state
 
 def decrypt_block(iv, block, key):
-    initial_key_segment, full_round_keys, final_key_segment = (key[0:AES_BLOCK_SIZE,
-                                                               key[AES_BLOCK_SIZE:len(key)-17],
-                                                               key[len(key-17): len(key)-1]])
+    initial_key_segment, full_round_keys, final_key_segment = (key[0:AES_BLOCK_SIZE],
+                                                               key[AES_BLOCK_SIZE:len(key)-16],
+                                                               key[len(key)-16: len(key)])
+
+    full_round_keys = [full_round_keys[i:i+16] for i in range(0, len(full_round_keys), 16)]
 
     curr_state = add_round_key(block, initial_key_segment)
 
+    round_counter = 1
     for key_segment in full_round_keys:
-        curr_state = imix_column(add_round_key(ibyte_sub(ishift_row(curr_state)),key_segment))
+        curr_state = ishift_row(curr_state)
+        curr_state = ibyte_sub(curr_state)
+        curr_state = add_round_key(curr_state, key_segment)
+        curr_state = imix_column(curr_state)
 
-    return [i ^ c for i,c in zip(iv, curr_state)]
+    final_state = [i ^ c for i,c in zip(iv, curr_state)]
+
+    return final_state
 
 #===============Key Expansion Functions==================#
 
