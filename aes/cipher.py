@@ -19,7 +19,7 @@ class Cipher:
             self.expanded_key = expand_key_128_192(self.expanded_key)[:192]
             return self.expanded_key
         elif len(self.expanded_key) == 32:
-            self.expanded_key = expand_key_256(self.expanded_key)
+            self.expanded_key = expand_key_256(self.expanded_key)[:256]
             return self.expanded_key
         else:
             print("Invalid key specified")

@@ -288,7 +288,33 @@ def expand_key_128_192(key):
     return expanded_key
 
 def expand_round_bytes_256(expanded_key, current_round, num_bytes):
-    pass
+    expanded_round_bytes = []
+    for i in range(1, 4):
+        ek1 = ek(expanded_key, (current_round+i-1)*4)
+        ek2 = ek(expanded_key, (current_round+i-num_bytes)*4)
+        expanded_key += [a^b for a,b in zip(ek1, ek2)]
+
+    ek1 = ek(expanded_key, (current_round+4-1)*4)
+    ek2 = ek(expanded_key, (current_round+4-num_bytes)*4)
+    se = sub_word([a^b for a,b in zip(ek1, ek2)])
+    expanded_key += se
+
+    for i in range(5, num_bytes):
+        ek1 = ek(expanded_key, (current_round+i-1)*4)
+        ek2 = ek(expanded_key, (current_round+i-num_bytes)*4)
+        expanded_key += [a^b for a,b in zip(ek1, ek2)]
+
+    return expanded_key
+
 
 def expand_key_256(key):
-    pass
+    num_bytes = int(len(key) / 4)
+    num_rounds = KEY_LENGTHS_TO_ROUNDS[len(key)]
+
+    expanded_key = key
+    for expansion_round in range(num_bytes, num_rounds, num_bytes):
+        round_bytes = generate_round_bytes(expanded_key, expansion_round, num_bytes)
+        expanded_key += round_bytes
+        expanded_key = expand_round_bytes_256(expanded_key, expansion_round, num_bytes)
+
+    return expanded_key
