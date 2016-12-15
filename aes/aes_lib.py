@@ -215,15 +215,18 @@ def decrypt_block(iv, block, key):
 
     full_round_keys = [full_round_keys[i:i+16] for i in range(0, len(full_round_keys), 16)]
 
-    curr_state = add_round_key(block, initial_key_segment)
+    curr_state = add_round_key(block, final_key_segment)
 
     round_counter = 1
-    for key_segment in full_round_keys:
+    for key_segment in reversed(full_round_keys):
         curr_state = ishift_row(curr_state)
         curr_state = ibyte_sub(curr_state)
         curr_state = add_round_key(curr_state, key_segment)
         curr_state = imix_column(curr_state)
 
+    curr_state = ishift_row(curr_state)
+    curr_state = ibyte_sub(curr_state)
+    curr_state = add_round_key(curr_state, initial_key_segment)
     final_state = [i ^ c for i,c in zip(iv, curr_state)]
 
     return final_state
@@ -248,8 +251,8 @@ def sub_word(b_word):
 def generate_round_bytes(expanded_key, current_round, num_bytes):
     sre = sub_word(rot_word(ek(expanded_key, (current_round-1)*4)))
     ek2 = ek(expanded_key, (current_round-num_bytes)*4)
-    rc = rcon((current_round/num_bytes)-1)
-    new_bytes = [a^b^c for a,b,c in zip(sre, rc, ek2)]
+    rc = rcon(int(current_round/num_bytes)-1)
+    new_bytes = bytes([a^b^c for a,b,c in zip(sre, rc, ek2)])
     return new_bytes
 
 def expand_round_bytes(expanded_key, current_round, num_bytes):
@@ -263,12 +266,11 @@ def expand_round_bytes(expanded_key, current_round, num_bytes):
 
 def expand_key(key):
     # Key expansion parameters
-    num_bytes = len(key) / 4
+    num_bytes = int(len(key) / 4)
     num_rounds = KEY_LENGTHS_TO_ROUNDS[len(key)]
 
     # First bytes are the original key
     expanded_key = key
-
     for expansion_round in range(num_bytes, num_rounds, num_bytes):
         round_bytes = generate_round_bytes(expanded_key, expansion_round, num_bytes)
         expanded_key += round_bytes

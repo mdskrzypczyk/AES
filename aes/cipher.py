@@ -8,8 +8,8 @@ class Cipher:
         self.iv = iv
 
     def expand_key(self):
-        # Transform into a byte array
-        self.expanded_key = [ord(b) for b in self.expanded_key.decode('hex')]
+        # Transform into an int array TODO: Implement smarter key format detection and conversion
+        self.expanded_key = [ord(c) for c in self.expanded_key]
 
         # Check length
         if len(self.expanded_key) in VALID_KEY_LENGTHS:
@@ -26,10 +26,9 @@ class Cipher:
         padded_plaintext = pad_plaintext(plaintext)
         print(padded_plaintext)
         plaintext_blocks = plaintext_to_blocks(padded_plaintext)
-        iv = [0] * 16
 
         for block in plaintext_blocks:
-            ciphertext += encrypt_block(iv, block, self.expanded_key)
+            ciphertext += encrypt_block(self.iv, block, self.expanded_key)
 
         ciphertext = [chr(c) for c in ciphertext]
         return ciphertext
@@ -38,12 +37,11 @@ class Cipher:
         plaintext = []
         ciphertext = [ord(c) for c in ciphertext]
         ciphertext_blocks = [ciphertext[i:i+AES_BLOCK_SIZE] for i in range(0, len(ciphertext), AES_BLOCK_SIZE)]
-        iv = [0] * 16
 
         for block in ciphertext_blocks:
-            plaintext += decrypt_block(iv, block, self.expanded_key)
+            plaintext += decrypt_block(self.iv, block, self.expanded_key)
 
         padding_num = plaintext[-1]
-        plaintext = plaintext[0:len(plaintext) - (padding_num+1)]
+        plaintext = plaintext[0:len(plaintext) - (padding_num)]
         plaintext = [chr(p) for p in plaintext]
         return plaintext
