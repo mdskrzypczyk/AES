@@ -12,10 +12,15 @@ class Cipher:
         self.expanded_key = [ord(c) for c in self.expanded_key]
 
         # Check length
-        if len(self.expanded_key) in VALID_KEY_LENGTHS:
-            self.expanded_key = expand_key(self.expanded_key)
+        if len(self.expanded_key) == 16:
+            self.expanded_key = expand_key_128_192(self.expanded_key)
             return self.expanded_key
-
+        elif len(self.expanded_key) == 24:
+            self.expanded_key = expand_key_128_192(self.expanded_key)[:192]
+            return self.expanded_key
+        elif len(self.expanded_key) == 32:
+            self.expanded_key = expand_key_256(self.expanded_key)
+            return self.expanded_key
         else:
             print("Invalid key specified")
             raise
@@ -24,7 +29,6 @@ class Cipher:
         # ECB mode
         ciphertext = []
         padded_plaintext = pad_plaintext(plaintext)
-        print(padded_plaintext)
         plaintext_blocks = plaintext_to_blocks(padded_plaintext)
 
         for block in plaintext_blocks:

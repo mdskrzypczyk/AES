@@ -139,7 +139,7 @@ def galois_multiply(b_word, matrix_row):
 
 def pad_plaintext(plaintext):
     plaintext = [ord(c) for c in plaintext]
-    padding_num = 16 - (len(plaintext) % 16)
+    padding_num = AES_BLOCK_SIZE - (len(plaintext) % AES_BLOCK_SIZE)
     plaintext += [padding_num] * padding_num
     return plaintext
 
@@ -169,18 +169,23 @@ def encrypt_block(iv, block, key):
 
     initial_key_segment, full_round_keys, final_key_segment = (key[0:AES_BLOCK_SIZE],
                                                                key[AES_BLOCK_SIZE:len(key)-16],
-                                                               key[len(key)-16: len(key)])
+                                                               key[len(key)-AES_BLOCK_SIZE: len(key)])
 
-    full_round_keys = [full_round_keys[i:i+16] for i in range(0, len(full_round_keys), 16)]
+    full_round_keys = [full_round_keys[i:i+AES_BLOCK_SIZE] for i in range(0, len(full_round_keys), AES_BLOCK_SIZE)]
 
     curr_state = add_round_key(curr_state, initial_key_segment)
     
     for key_segment in full_round_keys:
+        print("ADD_ROUND_KEY: ", curr_state)
         curr_state = byte_sub(curr_state)
+        print("BYTE_SUB: ", curr_state)
         curr_state = shift_row(curr_state)
+        print("SHIFT_ROW: ", curr_state)
         curr_state = mix_column(curr_state)
+        print("MIX_COLUMN: ", curr_state)
         curr_state = add_round_key(curr_state, key_segment)
 
+    print("ADD_ROUND_KEY: ", curr_state)
     curr_state = byte_sub(curr_state)
     curr_state = shift_row(curr_state)
     final_state = add_round_key(curr_state, final_key_segment)
@@ -210,20 +215,24 @@ def imix_column(state):
 
 def decrypt_block(iv, block, key):
     initial_key_segment, full_round_keys, final_key_segment = (key[0:AES_BLOCK_SIZE],
-                                                               key[AES_BLOCK_SIZE:len(key)-16],
-                                                               key[len(key)-16: len(key)])
+                                                               key[AES_BLOCK_SIZE:len(key)-AES_BLOCK_SIZE],
+                                                               key[len(key)-AES_BLOCK_SIZE: len(key)])
 
-    full_round_keys = [full_round_keys[i:i+16] for i in range(0, len(full_round_keys), 16)]
+    full_round_keys = [full_round_keys[i:i+AES_BLOCK_SIZE] for i in range(0, len(full_round_keys), AES_BLOCK_SIZE)]
 
     curr_state = add_round_key(block, final_key_segment)
 
-    round_counter = 1
     for key_segment in reversed(full_round_keys):
+        print(curr_state)
         curr_state = ishift_row(curr_state)
+        print(curr_state)
         curr_state = ibyte_sub(curr_state)
+        print(curr_state)
         curr_state = add_round_key(curr_state, key_segment)
+        print(curr_state)
         curr_state = imix_column(curr_state)
 
+    print(curr_state)
     curr_state = ishift_row(curr_state)
     curr_state = ibyte_sub(curr_state)
     curr_state = add_round_key(curr_state, initial_key_segment)
@@ -255,7 +264,7 @@ def generate_round_bytes(expanded_key, current_round, num_bytes):
     new_bytes = bytes([a^b^c for a,b,c in zip(sre, rc, ek2)])
     return new_bytes
 
-def expand_round_bytes(expanded_key, current_round, num_bytes):
+def expand_round_bytes_128_192(expanded_key, current_round, num_bytes):
     expanded_round_bytes = []
     for i in range(1, num_bytes):
         ek1 = ek(expanded_key, (current_round+i-1)*4)
@@ -264,7 +273,7 @@ def expand_round_bytes(expanded_key, current_round, num_bytes):
 
     return expanded_key
 
-def expand_key(key):
+def expand_key_128_192(key):
     # Key expansion parameters
     num_bytes = int(len(key) / 4)
     num_rounds = KEY_LENGTHS_TO_ROUNDS[len(key)]
@@ -274,6 +283,12 @@ def expand_key(key):
     for expansion_round in range(num_bytes, num_rounds, num_bytes):
         round_bytes = generate_round_bytes(expanded_key, expansion_round, num_bytes)
         expanded_key += round_bytes
-        expanded_key = expand_round_bytes(expanded_key, expansion_round, num_bytes)
+        expanded_key = expand_round_bytes_128_192(expanded_key, expansion_round, num_bytes)
 
-    return expanded_key 
+    return expanded_key
+
+def expand_round_bytes_256(expanded_key, current_round, num_bytes):
+    pass
+
+def expand_key_256(key):
+    pass
