@@ -176,16 +176,11 @@ def encrypt_block(iv, block, key):
     curr_state = add_round_key(curr_state, initial_key_segment)
     
     for key_segment in full_round_keys:
-        print("ADD_ROUND_KEY: ", curr_state)
         curr_state = byte_sub(curr_state)
-        print("BYTE_SUB: ", curr_state)
         curr_state = shift_row(curr_state)
-        print("SHIFT_ROW: ", curr_state)
         curr_state = mix_column(curr_state)
-        print("MIX_COLUMN: ", curr_state)
         curr_state = add_round_key(curr_state, key_segment)
 
-    print("ADD_ROUND_KEY: ", curr_state)
     curr_state = byte_sub(curr_state)
     curr_state = shift_row(curr_state)
     final_state = add_round_key(curr_state, final_key_segment)
@@ -223,16 +218,11 @@ def decrypt_block(iv, block, key):
     curr_state = add_round_key(block, final_key_segment)
 
     for key_segment in reversed(full_round_keys):
-        print(curr_state)
         curr_state = ishift_row(curr_state)
-        print(curr_state)
         curr_state = ibyte_sub(curr_state)
-        print(curr_state)
         curr_state = add_round_key(curr_state, key_segment)
-        print(curr_state)
         curr_state = imix_column(curr_state)
 
-    print(curr_state)
     curr_state = ishift_row(curr_state)
     curr_state = ibyte_sub(curr_state)
     curr_state = add_round_key(curr_state, initial_key_segment)
